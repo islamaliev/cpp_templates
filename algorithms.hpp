@@ -168,6 +168,29 @@ static_assert(LowerBound<ValueList<int, 1, 2, 3, 4, 5>, Value<int, 3>>::value ==
 static_assert(LowerBound<ValueList<int, 1, 2, 4, 5>, Value<int, 3>, GreaterValue>::value == 2, "");
 static_assert(LowerBound<ValueList<int, 1, 2, 4, 5>, Value<int, 6>, GreaterValue>::value == 4, "");
 
+template<class...>
+struct ConcatListsT;
+
+template<template<class...> class List1, template<class...> class List2, class... Types1, class...Types2>
+struct ConcatListsT<List1<Types1...>, List2<Types2...>>
+{
+	using Type = List1<Types1..., Types2...>;
+};
+
+template<class FirstList, class... RemainingLists>
+struct ConcatListsT<FirstList, RemainingLists...>
+{
+	using Type = typename ConcatListsT<FirstList, typename ConcatListsT<RemainingLists...>::Type>::Type;
+};
+
+template<class... Lists>
+using ConcatLists = typename ConcatListsT<Lists...>::Type;
+
+static_assert(std::is_same_v<ConcatLists<TypeList<bool, int>, TypeList<float, char>>, TypeList<bool, int, float, char>>, "");
+static_assert(std::is_same_v<ConcatLists<TypeList<>, TypeList<float, char>>, TypeList<float, char>>, "");
+static_assert(std::is_same_v<ConcatLists<TypeList<bool, int>, TypeList<>>, TypeList<bool, int>>, "");
+static_assert(std::is_same_v<ConcatLists<TypeList<bool>, TypeList<int>, TypeList<float, char>>, TypeList<bool, int, float, char>>, "");
+
 // InsersionSort
 
 template<class>
