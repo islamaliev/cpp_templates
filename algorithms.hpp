@@ -260,12 +260,12 @@ static_assert(std::is_same_v<ListTail<2, std::tuple<int, float, char>>, std::tup
 template<int, int, class>
 struct ListSliceT;
 
-//template<
-
 template<int Begin, int End, class List>
 using ListSlice = ListHead<End - Begin, ListTail<ListSize<List>::value - Begin, List>>;
 
 static_assert(std::is_same_v<ListSlice<1, 4, TypeList<int, char, float, bool, double>>, TypeList<char, float, bool>>, "");
+static_assert(std::is_same_v<ListSlice<0, 2, TypeList<int, char, float, bool, double>>, TypeList<int, char>>, "");
+static_assert(std::is_same_v<ListSlice<2, 5, TypeList<int, char, float, bool, double>>, TypeList<float, bool, double>>, "");
 
 // InsersionSort
 
