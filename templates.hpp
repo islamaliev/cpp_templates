@@ -17,6 +17,45 @@ struct Value
 template<class T, T... Values>
 using ValueList = TypeList<Value<int, Values>...>;
 
+// ToTypeList
+
+template<class>
+struct ToTypeListT;
+
+template<template<class...> class List, class... Ts>
+struct ToTypeListT<List<Ts...>>
+{
+	using Type = TypeList<Ts...>;
+};
+
+template<class List>
+using ToTypeList = typename ToTypeListT<List>::Type;
+
+static_assert(std::is_same_v<ToTypeList<TypeList<int>>, TypeList<int>>, "");
+static_assert(std::is_same_v<ToTypeList<TypeList<int, double>>, TypeList<int, double>>, "");
+static_assert(std::is_same_v<ToTypeList<std::tuple<int>>, TypeList<int>>, "");
+static_assert(std::is_same_v<ToTypeList<std::tuple<int, double>>, TypeList<int, double>>, "");
+
+// FromTypeList
+
+template<class, template<class...> class>
+struct FromTypeListT;
+
+template<template<class...> class To, class... Ts1>
+struct FromTypeListT<TypeList<Ts1...>, To>
+{
+	using Type = To<Ts1...>;
+};
+
+template<class List, template<class...> class To>
+using FromTypeList = typename FromTypeListT<List, To>::Type;
+
+static_assert(std::is_same_v<FromTypeList<TypeList<>, std::tuple>, std::tuple<>>, "");
+static_assert(std::is_same_v<FromTypeList<TypeList<int>, std::tuple>, std::tuple<int>>, "");
+static_assert(std::is_same_v<FromTypeList<TypeList<int>, TypeList>, TypeList<int>>, "");
+static_assert(std::is_same_v<FromTypeList<TypeList<int, double>, std::tuple>, std::tuple<int, double>>, "");
+static_assert(std::is_same_v<FromTypeList<TypeList<int, double>, TypeList>, TypeList<int, double>>, "");
+
 // Front
 
 template<class...>
@@ -126,45 +165,6 @@ static_assert(IsEmpty<std::tuple<>>::value == true, "");
 static_assert(IsEmpty<ValueList<int, 1>>::value == false, "");
 static_assert(IsEmpty<ValueList<int>>::value == true, "");
 
-// ToTypeList
-
-template<class>
-struct ToTypeListT;
-
-template<template<class...> class List, class... Ts>
-struct ToTypeListT<List<Ts...>>
-{
-	using Type = TypeList<Ts...>;
-};
-
-template<class List>
-using ToTypeList = typename ToTypeListT<List>::Type;
-
-static_assert(std::is_same_v<ToTypeList<TypeList<int>>, TypeList<int>>, "");
-static_assert(std::is_same_v<ToTypeList<TypeList<int, double>>, TypeList<int, double>>, "");
-static_assert(std::is_same_v<ToTypeList<std::tuple<int>>, TypeList<int>>, "");
-static_assert(std::is_same_v<ToTypeList<std::tuple<int, double>>, TypeList<int, double>>, "");
-
-// FromTypeList
-
-template<class, template<class...> class>
-struct FromTypeListT;
-
-template<template<class...> class To, class... Ts1>
-struct FromTypeListT<TypeList<Ts1...>, To>
-{
-	using Type = To<Ts1...>;
-};
-
-template<class List, template<class...> class To>
-using FromTypeList = typename FromTypeListT<List, To>::Type;
-
-static_assert(std::is_same_v<FromTypeList<TypeList<>, std::tuple>, std::tuple<>>, "");
-static_assert(std::is_same_v<FromTypeList<TypeList<int>, std::tuple>, std::tuple<int>>, "");
-static_assert(std::is_same_v<FromTypeList<TypeList<int>, TypeList>, TypeList<int>>, "");
-static_assert(std::is_same_v<FromTypeList<TypeList<int, double>, std::tuple>, std::tuple<int, double>>, "");
-static_assert(std::is_same_v<FromTypeList<TypeList<int, double>, TypeList>, TypeList<int, double>>, "");
-
 // Reverse
 
 template<class List>
@@ -228,6 +228,29 @@ static_assert(std::is_same_v<Back<TypeList<int, double>>, double>, "");
 static_assert(std::is_same_v<Back<TypeList<bool, int, short>>, short>, "");
 static_assert(std::is_same_v<Back<ValueList<int, 1, 2, 3>>, Value<int, 3>>, "");
 
+// IfThenElse
+
+template<bool, class, class>
+struct IfThenElseT;
+
+template<class Then, class Else>
+struct IfThenElseT<true, Then, Else>
+{
+	using Type = Then;
+};
+
+template<class Then, class Else>
+struct IfThenElseT<false, Then, Else>
+{
+	using Type = Else;
+};
+
+template<bool Cond, class Then, class Else>
+using IfThenElse = typename IfThenElseT<Cond, Then, Else>::Type;
+
+static_assert(std::is_same_v<IfThenElse<true, int, short>, int>, "");
+static_assert(std::is_same_v<IfThenElse<false, int, short>, short>, "");
+
 // Transform
 
 template<class, template<class> class>
@@ -257,29 +280,6 @@ struct AddPointer
 
 static_assert(std::is_same_v<Transform<TypeList<>, AddPointer>, TypeList<>>, "");
 static_assert(std::is_same_v<Transform<TypeList<int, double>, AddPointer>, TypeList<int*, double*>>, "");
-
-// IfThenElse
-
-template<bool, class, class>
-struct IfThenElseT;
-
-template<class Then, class Else>
-struct IfThenElseT<true, Then, Else>
-{
-	using Type = Then;
-};
-
-template<class Then, class Else>
-struct IfThenElseT<false, Then, Else>
-{
-	using Type = Else;
-};
-
-template<bool Cond, class Then, class Else>
-using IfThenElse = typename IfThenElseT<Cond, Then, Else>::Type;
-
-static_assert(std::is_same_v<IfThenElse<true, int, short>, int>, "");
-static_assert(std::is_same_v<IfThenElse<false, int, short>, short>, "");
 
 // LargerType
 
