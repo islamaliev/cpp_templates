@@ -244,6 +244,17 @@ static_assert(std::is_same_v<ListHead<3, TypeList<float, int, char>>, TypeList<f
 static_assert(std::is_same_v<ListHead<2, ValueList<int, 1, 2, 3>>, ValueList<int, 1, 2>>, "");
 static_assert(std::is_same_v<ListHead<2, std::tuple<int, float, char>>, std::tuple<int, float>>, "");
 
+// ListTail
+
+template<int Size, class List>
+using ListTail = Reverse<ListHead<Size, Reverse<List>>>;
+
+static_assert(std::is_same_v<ListTail<1, TypeList<float, int, char>>, TypeList<char>>, "");
+static_assert(std::is_same_v<ListTail<2, TypeList<float, int, char>>, TypeList<int, char>>, "");
+static_assert(std::is_same_v<ListTail<3, TypeList<float, int, char>>, TypeList<float, int, char>>, "");
+static_assert(std::is_same_v<ListTail<2, ValueList<int, 1, 2, 3>>, ValueList<int, 2, 3>>, "");
+static_assert(std::is_same_v<ListTail<2, std::tuple<int, float, char>>, std::tuple<float, char>>, "");
+
 // InsersionSort
 
 template<class>
