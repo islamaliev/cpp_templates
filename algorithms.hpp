@@ -255,6 +255,18 @@ static_assert(std::is_same_v<ListTail<3, TypeList<float, int, char>>, TypeList<f
 static_assert(std::is_same_v<ListTail<2, ValueList<int, 1, 2, 3>>, ValueList<int, 2, 3>>, "");
 static_assert(std::is_same_v<ListTail<2, std::tuple<int, float, char>>, std::tuple<float, char>>, "");
 
+// ListSlice
+
+template<int, int, class>
+struct ListSliceT;
+
+//template<
+
+template<int Begin, int End, class List>
+using ListSlice = ListHead<End - Begin, ListTail<ListSize<List>::value - Begin, List>>;
+
+static_assert(std::is_same_v<ListSlice<1, 4, TypeList<int, char, float, bool, double>>, TypeList<char, float, bool>>, "");
+
 // InsersionSort
 
 template<class>
