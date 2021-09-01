@@ -213,9 +213,36 @@ struct JoinListsT<Delim, FirstList, RemainingLists...>
 template<class Delim, class... Lists>
 using JoinLists = typename JoinListsT<Delim, Lists...>::Type;
 
+static_assert(std::is_same_v<JoinLists<char, TypeList<>, TypeList<float>>, TypeList<char, float>>, "");
+static_assert(std::is_same_v<JoinLists<char, TypeList<int, bool>, TypeList<>>, TypeList<int, bool, char>>, "");
 static_assert(std::is_same_v<JoinLists<char, TypeList<int, bool>, TypeList<float>>, TypeList<int, bool, char, float>>, "");
 static_assert(std::is_same_v<JoinLists<char, TypeList<int, bool>, TypeList<float>, TypeList<double>>, TypeList<int, bool, char, float, char, double>>, "");
 static_assert(std::is_same_v<JoinLists<Value<int, 0>, ValueList<int, 1>, ValueList<int, 2, 3>, ValueList<int, 4>>, ValueList<int, 1, 0, 2, 3, 0, 4>>, "");
+
+// ListHead
+
+template<int, int, class, class = TypeList<>>
+struct ListHeadT;
+
+template<int Size, template<class...> class List, class ResultList, class Head, class... Tail>
+struct ListHeadT<Size, Size, List<Head, Tail...>, ResultList> 
+{
+	using Type = FromTypeList<PushBack<ResultList, Head>, List>;
+};
+
+template<int Size, int Index, template<class...> class List, class ResultList, class Head, class... Tail>
+struct ListHeadT<Size, Index, List<Head, Tail...>, ResultList> 
+	: ListHeadT<Size, Index + 1, List<Tail...>, PushBack<ResultList, Head>>
+{};
+
+template<int Size, class List>
+using ListHead = typename ListHeadT<Size, 1, List>::Type;
+
+static_assert(std::is_same_v<ListHead<1, TypeList<float, int, char>>, TypeList<float>>, "");
+static_assert(std::is_same_v<ListHead<2, TypeList<float, int, char>>, TypeList<float, int>>, "");
+static_assert(std::is_same_v<ListHead<3, TypeList<float, int, char>>, TypeList<float, int, char>>, "");
+static_assert(std::is_same_v<ListHead<2, ValueList<int, 1, 2, 3>>, ValueList<int, 1, 2>>, "");
+static_assert(std::is_same_v<ListHead<2, std::tuple<int, float, char>>, std::tuple<int, float>>, "");
 
 // InsersionSort
 
