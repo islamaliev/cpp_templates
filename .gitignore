@@ -1,4 +1,6 @@
 cpp_templates/
+out/
+.vscode/
 
 # Prerequisites
 *.d
