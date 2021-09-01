@@ -168,6 +168,8 @@ static_assert(LowerBound<ValueList<int, 1, 2, 3, 4, 5>, Value<int, 3>>::value ==
 static_assert(LowerBound<ValueList<int, 1, 2, 4, 5>, Value<int, 3>, GreaterValue>::value == 2, "");
 static_assert(LowerBound<ValueList<int, 1, 2, 4, 5>, Value<int, 6>, GreaterValue>::value == 4, "");
 
+// ConcatLists
+
 template<class...>
 struct ConcatListsT;
 
@@ -190,6 +192,30 @@ static_assert(std::is_same_v<ConcatLists<TypeList<bool, int>, TypeList<float, ch
 static_assert(std::is_same_v<ConcatLists<TypeList<>, TypeList<float, char>>, TypeList<float, char>>, "");
 static_assert(std::is_same_v<ConcatLists<TypeList<bool, int>, TypeList<>>, TypeList<bool, int>>, "");
 static_assert(std::is_same_v<ConcatLists<TypeList<bool>, TypeList<int>, TypeList<float, char>>, TypeList<bool, int, float, char>>, "");
+
+// JoinLists
+
+template<class...>
+struct JoinListsT;
+
+template<class Delim, template<class...> class List1, template<class...> class List2, class... Types1, class... Types2>
+struct JoinListsT<Delim, List1<Types1...>, List2<Types2...>>
+{
+	using Type = ConcatLists<List1<Types1..., Delim>, List2<Types2...>>;
+};
+
+template<class Delim, class FirstList, class... RemainingLists>
+struct JoinListsT<Delim, FirstList, RemainingLists...>
+{
+	using Type = typename JoinListsT<Delim, FirstList, typename JoinListsT<Delim, RemainingLists...>::Type>::Type;
+};
+
+template<class Delim, class... Lists>
+using JoinLists = typename JoinListsT<Delim, Lists...>::Type;
+
+static_assert(std::is_same_v<JoinLists<char, TypeList<int, bool>, TypeList<float>>, TypeList<int, bool, char, float>>, "");
+static_assert(std::is_same_v<JoinLists<char, TypeList<int, bool>, TypeList<float>, TypeList<double>>, TypeList<int, bool, char, float, char, double>>, "");
+static_assert(std::is_same_v<JoinLists<Value<int, 0>, ValueList<int, 1>, ValueList<int, 2, 3>, ValueList<int, 4>>, ValueList<int, 1, 0, 2, 3, 0, 4>>, "");
 
 // InsersionSort
 
