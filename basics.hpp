@@ -250,3 +250,18 @@ using IfThenElse = typename IfThenElseT<Cond, Then, Else>::Type;
 
 static_assert(std::is_same_v<IfThenElse<true, int, short>, int>, "");
 static_assert(std::is_same_v<IfThenElse<false, int, short>, short>, "");
+
+// ListSize
+
+template<class>
+struct ListSize;
+
+template<template<class...> class List, class... Types>
+struct ListSize<List<Types...>>
+{
+	static constexpr int value = sizeof...(Types);
+};
+
+static_assert(ListSize<TypeList<>>::value == 0, "");
+static_assert(ListSize<TypeList<int>>::value == 1, "");
+static_assert(ListSize<TypeList<int, float>>::value == 2, "");
