@@ -10,8 +10,8 @@ using Transform = typename TransformT<List, Func>::Type;
 
 template<template<class...> class List, template<class> class Func, class... Ts>
 struct TransformT<List<Ts...>, Func> : PushFrontT<
-											Transform<PopFront<List<Ts...>>, Func>, 
-											typename Func<Front<List<Ts...>>>::Type>
+	Transform<PopFront<List<Ts...>>, Func>, 
+	typename Func<Front<List<Ts...>>>::Type>
 {
 };
 
@@ -221,23 +221,21 @@ static_assert(std::is_same_v<JoinLists<Value<int, 0>, ValueList<int, 1>, ValueLi
 
 // ListHead
 
-template<int, int, class, class = TypeList<>>
-struct ListHeadT;
-
-template<int Size, template<class...> class List, class ResultList, class Head, class... Tail>
-struct ListHeadT<Size, Size, List<Head, Tail...>, ResultList> 
-{
-	using Type = FromTypeList<PushBack<ResultList, Head>, List>;
-};
-
-template<int Size, int Index, template<class...> class List, class ResultList, class Head, class... Tail>
-struct ListHeadT<Size, Index, List<Head, Tail...>, ResultList> 
-	: ListHeadT<Size, Index + 1, List<Tail...>, PushBack<ResultList, Head>>
+template<int Size, int Index, class List, class ResultList = EmptyList<List>>
+struct ListHeadT
+	: ListHeadT<Size, Index + 1, PopFront<List>, PushBack<ResultList, Front<List>>>
 {};
 
-template<int Size, class List>
-using ListHead = typename ListHeadT<Size, 1, List>::Type;
+template<int Size, class List, class ResultList>
+struct ListHeadT<Size, Size, List, ResultList> 
+{
+	using Type = ResultList;
+};
 
+template<int Size, class List>
+using ListHead = typename ListHeadT<Size, 0, List>::Type;
+
+static_assert(std::is_same_v<ListHead<0, TypeList<float, int, char>>, TypeList<>>, "");
 static_assert(std::is_same_v<ListHead<1, TypeList<float, int, char>>, TypeList<float>>, "");
 static_assert(std::is_same_v<ListHead<2, TypeList<float, int, char>>, TypeList<float, int>>, "");
 static_assert(std::is_same_v<ListHead<3, TypeList<float, int, char>>, TypeList<float, int, char>>, "");
@@ -249,6 +247,7 @@ static_assert(std::is_same_v<ListHead<2, std::tuple<int, float, char>>, std::tup
 template<int Size, class List>
 using ListTail = Reverse<ListHead<Size, Reverse<List>>>;
 
+static_assert(std::is_same_v<ListTail<0, TypeList<float, int, char>>, TypeList<>>, "");
 static_assert(std::is_same_v<ListTail<1, TypeList<float, int, char>>, TypeList<char>>, "");
 static_assert(std::is_same_v<ListTail<2, TypeList<float, int, char>>, TypeList<int, char>>, "");
 static_assert(std::is_same_v<ListTail<3, TypeList<float, int, char>>, TypeList<float, int, char>>, "");
@@ -267,10 +266,41 @@ static_assert(std::is_same_v<ListSlice<1, 4, TypeList<int, char, float, bool, do
 static_assert(std::is_same_v<ListSlice<0, 2, TypeList<int, char, float, bool, double>>, TypeList<int, char>>, "");
 static_assert(std::is_same_v<ListSlice<2, 5, TypeList<int, char, float, bool, double>>, TypeList<float, bool, double>>, "");
 
-// InsersionSort
+// SortList
 
-template<class>
-struct InsersionSort;
+template<class List, int Ind, int End, template<class, class> class Comp = GreaterValue>
+struct SortListT
+{
+private:
+	using El = NthElement<List, Ind>;
+	static constexpr int elPos = LowerBound<ListHead<Ind, List>, El, Comp>::value;
+	using SortedPart = JoinLists<El, ListHead<elPos, List>, ListSlice<elPos, Ind, List>>;
 
+public:
+	using Type = typename SortListT<ConcatLists<SortedPart, ListTail<ListSize<List>::value - Ind - 1, List>>, Ind + 1, End, Comp>::Type;
+};
 
-//static_assert(std::is_same_v<InsersionSort<ValueList<int, 4, 1, 3, 2>>, ValueList<int, 1, 2, 3, 4>>, "");
+template<class List, int Ind, template<class, class> class Comp>
+struct SortListT<List, Ind, Ind, Comp>
+{
+	using Type = List;
+};
+
+template<class List, template<class, class> class Comp>
+struct SortListT<List, 1, 0, Comp>
+{
+	using Type = EmptyList<List>;
+};
+
+template<class List>
+using SortList = typename SortListT<List, 1, ListSize<List>::value>::Type;
+
+template<class List, template<class, class> class Comp>
+using SortListComp = typename SortListT<List, 1, ListSize<List>::value, Comp>::Type;
+
+static_assert(std::is_same_v<SortList<ValueList<int>>, ValueList<int>>, "");
+static_assert(std::is_same_v<SortList<ValueList<int, 3>>, ValueList<int, 3>>, "");
+static_assert(std::is_same_v<SortList<ValueList<int, 4, 3>>, ValueList<int, 3, 4>>, "");
+static_assert(std::is_same_v<SortList<ValueList<int, 1, 4, 3>>, ValueList<int, 1, 3, 4>>, "");
+static_assert(std::is_same_v<SortList<ValueList<int, 4, 3, 1, 5, 2>>, ValueList<int, 1, 2, 3, 4, 5>>, "");
+static_assert(std::is_same_v<SortListComp<ValueList<int, 4, 3, 1, 5, 2>, LessValue>, ValueList<int, 5, 4, 3, 2, 1>>, "");
