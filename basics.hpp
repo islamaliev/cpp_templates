@@ -265,3 +265,21 @@ struct ListSize<List<Types...>>
 static_assert(ListSize<TypeList<>>::value == 0, "");
 static_assert(ListSize<TypeList<int>>::value == 1, "");
 static_assert(ListSize<TypeList<int, float>>::value == 2, "");
+
+// EmptyList
+
+template<class>
+struct EmptyListT;
+
+template<template<class...> class List, class... Types>
+struct EmptyListT<List<Types...>>
+{
+	using Type = List<>;
+};
+
+template<class List>
+using EmptyList = typename EmptyListT<List>::Type;
+
+static_assert(std::is_same_v<EmptyList<TypeList<int, float>>, TypeList<>>, "");
+static_assert(std::is_same_v<EmptyList<TypeList<>>, TypeList<>>, "");
+static_assert(std::is_same_v<EmptyList<std::tuple<bool, char>>, std::tuple<>>, "");
