@@ -283,3 +283,27 @@ using EmptyList = typename EmptyListT<List>::Type;
 static_assert(std::is_same_v<EmptyList<TypeList<int, float>>, TypeList<>>, "");
 static_assert(std::is_same_v<EmptyList<TypeList<>>, TypeList<>>, "");
 static_assert(std::is_same_v<EmptyList<std::tuple<bool, char>>, std::tuple<>>, "");
+
+// NthElement
+
+template<class, int>
+struct NthElementT;
+
+template<template<class...> class List, class Head, class... Tail>
+struct NthElementT<List<Head, Tail...>, 0> 
+{
+	using Type = Head;
+};
+
+template<template<class...> class List, int Num, class Head, class... Tail>
+struct NthElementT<List<Head, Tail...>, Num> : NthElementT<List<Tail...>, Num - 1> 
+{};
+
+template<class List, int Num>
+using NthElement = typename NthElementT<List, Num>::Type;
+
+static_assert(std::is_same_v<NthElement<ValueList<int, 0, 1, 2, 3>, 0>, Value<int, 0>>, "");
+static_assert(std::is_same_v<NthElement<ValueList<int, 0, 1, 2, 3>, 1>, Value<int, 1>>, "");
+static_assert(std::is_same_v<NthElement<ValueList<int, 0, 1, 2, 3>, 3>, Value<int, 3>>, "");
+static_assert(std::is_same_v<NthElement<TypeList<int, bool, double, short>, 2>, double>, "");
+
