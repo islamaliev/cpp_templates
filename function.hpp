@@ -2,7 +2,7 @@
 
 namespace {
 	struct TestCallable {
-		void operator()(double) {};
+		void operator()(char, double) {};
 
 		float memberFunc() { return 0.f; }
 		long memberConstFunc() const { return 1; }
@@ -31,27 +31,26 @@ static_assert(IsCallable<decltype(testLambda) > , "");
 
 // Function
 
-template<class R, class... Params>
-struct FunctionInfo
-{
-	using Signature = R(Params...);
+template<class R, class... Ps>
+struct FunctionInfo {
+	using Signature = R(Ps...);
 	using Ret = R;
+	using Params = TypeList<Ps...>;
 
-	static constexpr int numParams = sizeof...(Params);
+	static constexpr int numParams = ListSize<Params>::value;
 
 	template<int index>
-	struct Param
-	{
-		using Type = NthElement<TypeList<Params...>, index>;
+	struct Param {
+		using Type = NthElement<Params, index>;
 	};
 };
+
 template<class T, typename = void>
 struct Function;
 
 // member
 template<class T, class Ret, class... Params>
-struct Function<Ret(T::*)(Params...)> : FunctionInfo<Ret, Params...>
-{
+struct Function<Ret(T::*)(Params...)> : FunctionInfo<Ret, Params...> {
 	static constexpr bool isMemberFunction = true;
 };
 
@@ -60,8 +59,7 @@ struct Function<Ret(T::*)(Params...) const> : Function<Ret(T::*)(Params...)> {};
 
 // function
 template<class R, class... FuncParams>
-struct Function<R(FuncParams...)> : FunctionInfo<R, FuncParams...>
-{
+struct Function<R(FuncParams...)> : FunctionInfo<R, FuncParams...> {
 	static constexpr bool isMemberFunction = false;
 };
 
@@ -85,6 +83,7 @@ static_assert(std::is_same_v<Function<decltype(testLambda)>::Ret, bool>, "");
 static_assert(std::is_same_v<Function<decltype(testLambda)>::Param<0>::Type, int>, "");
 static_assert(std::is_same_v<Function<decltype(testLambda)>::Param<1>::Type, float>, "");
 static_assert(Function<TestCallable>::isMemberFunction == false, "");
-static_assert(std::is_same_v<Function<TestCallable>::Param<0>::Type, double>, "");
+static_assert(std::is_same_v<Function<TestCallable>::Params, TypeList<char, double>>, "");
+static_assert(std::is_same_v<Function<TestCallable>::Signature, void(char, double)>, "");
 static_assert(Function<decltype(&TestCallable::memberFunc)>::isMemberFunction == true, "");
 static_assert(Function<decltype(&TestCallable::memberConstFunc)>::isMemberFunction == true, "");
