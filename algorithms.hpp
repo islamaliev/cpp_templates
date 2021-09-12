@@ -286,37 +286,63 @@ static_assert(std::is_same_v<SortListComp<ValueList<int, 4, 3, 1, 5, 2>, LessVal
 
 // IsEven
 
-template<class>
 struct IsEven {
+	template<class T, T I>
+	static constexpr bool apply(Value<T, I>) {
+		return apply(I);
+	}
+
+	template<class T>
+	static constexpr bool apply(T i) {
+		return i % 2 == 0;
+	}
 };
 
-template<class T, int I>
-struct IsEven<Value<T, I>> {
-	static constexpr bool value = I % 2 == 0;
-};
-
-static_assert(IsEven<Value<int, 1>>::value == false, "");
-static_assert(IsEven<Value<int, 2>>::value == true, "");
+static_assert(IsEven::apply(1) == false, "");
+static_assert(IsEven::apply(2) == true, "");
+static_assert(IsEven::apply(Value<int, 1>{}) == false, "");
+static_assert(IsEven::apply(Value<int, 2>{}) == true, "");
 
 // Filter
 
-template<class List, template<class> class FilterFunc, class Result = TypeList<>>
+template<class List, class FilterFunc, class Result = TypeList<>>
 struct FilterT {
 	using Type = typename FilterT<PopFront<List>, FilterFunc, 
 		IfThenElse<
-			FilterFunc<Front<List>>::value, 
+			FilterFunc::apply(Front<List>{}),
 			PushBack<Result, Front<List>>,
 			Result
 		>
 	>::Type;
 };
 
-template<template<class...> class List, template<class> class Func, class Result>
+template<template<class...> class List, class Func, class Result>
 struct FilterT<List<>, Func, Result> {
 	using Type = Result;
 };
 
-template<class List, template<class> class FilterFunc>
+template<class List, class FilterFunc>
 using Filter = typename FilterT<List, FilterFunc>::Type;
 
 static_assert(std::is_same_v<Filter<ValueList<int, 1, 3, 4, 5, 6, 2>, IsEven>, ValueList<int, 4, 6, 2>>, "");
+
+// Not
+
+template<class Func>
+struct Not {
+	template<class T>
+	static constexpr bool apply(T v) {
+		return !Func::apply(v);
+	}
+};
+
+static_assert(Not<IsEven>::apply(Value<int, 1>{}) == true, "");
+static_assert(Not<IsEven>::apply(Value<int, 2>{}) == false, "");
+
+// RemoveIf
+
+template<class List, class Func>
+using RemoveIf = Filter<List, Not<Func>>;
+
+static_assert(std::is_same_v<RemoveIf<ValueList<int, 1, 3, 4, 5, 6, 2>, IsEven>, ValueList<int, 1, 3, 5>>, "");
+
