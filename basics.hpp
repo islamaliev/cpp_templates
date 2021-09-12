@@ -1,3 +1,5 @@
+#pragma once
+
 #include <tuple>
 #include <type_traits>
 
@@ -283,6 +285,7 @@ using EmptyList = typename EmptyListT<List>::Type;
 static_assert(std::is_same_v<EmptyList<TypeList<int, float>>, TypeList<>>, "");
 static_assert(std::is_same_v<EmptyList<TypeList<>>, TypeList<>>, "");
 static_assert(std::is_same_v<EmptyList<std::tuple<bool, char>>, std::tuple<>>, "");
+static_assert(std::is_same_v<EmptyList<ValueList<int, 1, 2>>, ValueList<int>>, "");
 
 // NthElement
 

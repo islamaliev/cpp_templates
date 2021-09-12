@@ -1,3 +1,5 @@
+#pragma once
+
 #include "basics.hpp"
 
 // Transform
@@ -281,3 +283,40 @@ static_assert(std::is_same_v<SortList<ValueList<int, 4, 3>>, ValueList<int, 3, 4
 static_assert(std::is_same_v<SortList<ValueList<int, 1, 4, 3>>, ValueList<int, 1, 3, 4>>, "");
 static_assert(std::is_same_v<SortList<ValueList<int, 4, 3, 1, 5, 2>>, ValueList<int, 1, 2, 3, 4, 5>>, "");
 static_assert(std::is_same_v<SortListComp<ValueList<int, 4, 3, 1, 5, 2>, LessValue>, ValueList<int, 5, 4, 3, 2, 1>>, "");
+
+// IsEven
+
+template<class>
+struct IsEven {
+};
+
+template<class T, int I>
+struct IsEven<Value<T, I>> {
+	static constexpr bool value = I % 2 == 0;
+};
+
+static_assert(IsEven<Value<int, 1>>::value == false, "");
+static_assert(IsEven<Value<int, 2>>::value == true, "");
+
+// Filter
+
+template<class List, template<class> class FilterFunc, class Result = TypeList<>>
+struct FilterT {
+	using Type = typename FilterT<PopFront<List>, FilterFunc, 
+		IfThenElse<
+			FilterFunc<Front<List>>::value, 
+			PushBack<Result, Front<List>>,
+			Result
+		>
+	>::Type;
+};
+
+template<template<class...> class List, template<class> class Func, class Result>
+struct FilterT<List<>, Func, Result> {
+	using Type = Result;
+};
+
+template<class List, template<class> class FilterFunc>
+using Filter = typename FilterT<List, FilterFunc>::Type;
+
+static_assert(std::is_same_v<Filter<ValueList<int, 1, 3, 4, 5, 6, 2>, IsEven>, ValueList<int, 4, 6, 2>>, "");
