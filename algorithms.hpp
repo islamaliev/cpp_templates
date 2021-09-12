@@ -5,23 +5,15 @@
 // Transform
 
 template<class, template<class> class>
-struct TransformT;
+struct TransformT; 
+
+template<template<class...> class List, template<class> class Func, class... Ts>
+struct TransformT<List<Ts...>, Func> {
+	using Type = List<typename Func<Ts>::Type...>;
+};
 
 template<class List, template<class> class Func>
 using Transform = typename TransformT<List, Func>::Type;
-
-template<template<class...> class List, template<class> class Func, class... Ts>
-struct TransformT<List<Ts...>, Func> : PushFrontT<
-	Transform<PopFront<List<Ts...>>, Func>, 
-	typename Func<Front<List<Ts...>>>::Type>
-{
-};
-
-template<template<class...> class List, template<class> class Func>
-struct TransformT<List<>, Func>
-{
-	using Type = List<>;
-};
 
 template<class T>
 struct AddPointer
@@ -305,7 +297,7 @@ static_assert(IsEven::apply(Value<int, 2>{}) == true, "");
 
 // Filter
 
-template<class List, class FilterFunc, class Result = TypeList<>>
+template<class List, class FilterFunc, class Result = EmptyList<List>>
 struct FilterT {
 	using Type = typename FilterT<PopFront<List>, FilterFunc, 
 		IfThenElse<
