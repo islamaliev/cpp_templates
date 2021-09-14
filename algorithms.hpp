@@ -16,8 +16,7 @@ template<class List, template<class> class Func>
 using Transform = typename TransformT<List, Func>::Type;
 
 template<class T>
-struct AddPointer
-{
+struct AddPointer {
 	using Type = T*;
 };
 
@@ -27,8 +26,7 @@ static_assert(std::is_same_v<Transform<TypeList<int, double>, AddPointer>, TypeL
 // LargerType
 
 template<class T1, class T2>
-struct LargerTypeT 
-{
+struct LargerTypeT {
 	using Type = IfThenElse<(sizeof(T2) > sizeof(T1)), T2, T1>;
 };
 
@@ -44,8 +42,7 @@ template<class, class>
 struct LargerValueT;
 
 template<class T, T Value1, T Value2>
-struct LargerValueT<Value<T, Value1>, Value<T, Value2>>
-{
+struct LargerValueT<Value<T, Value1>, Value<T, Value2>> {
 	using Type = Value<T, (Value1 < Value2 ? Value2 : Value1)>;
 };
 
@@ -55,8 +52,7 @@ template<class, template<class, class> class, class>
 struct AccumulateT;
 
 template<template<class...> class List, template<class, class> class Func, class Init>
-struct AccumulateT<List<>, Func, Init>
-{
+struct AccumulateT<List<>, Func, Init> {
 	using Type = Init;
 };
 
@@ -78,8 +74,7 @@ template<class, class>
 struct LessValue;
 
 template<class T, T Value1, T Value2>
-struct LessValue<Value<T, Value1>, Value<T, Value2>>
-{
+struct LessValue<Value<T, Value1>, Value<T, Value2>> {
 	static constexpr bool value = Value1 < Value2;
 };
 
@@ -93,8 +88,7 @@ template<class, class>
 struct GreaterValue;
 
 template<class T, T Value1, T Value2>
-struct GreaterValue<Value<T, Value1>, Value<T, Value2>>
-{
+struct GreaterValue<Value<T, Value1>, Value<T, Value2>> {
 	static constexpr bool value = Value1 > Value2;
 };
 
@@ -111,14 +105,12 @@ template<class, class, int, int, template<class, class> class>
 struct LowerBoundRec;
 
 template<template<class...> class List, class Sought, int Ind, template<class, class> class CompFunc, class... Ts>
-struct LowerBoundRec<List<Ts...>, Sought, Ind, Ind, CompFunc>
-{
+struct LowerBoundRec<List<Ts...>, Sought, Ind, Ind, CompFunc> {
 	static constexpr int value = Ind;
 };
 
 template<template<class...> class List, class Sought, int Lower, int Upper, template<class, class> class CompFunc, class... Ts>
-struct LowerBoundRec<List<Ts...>, Sought, Lower, Upper, CompFunc>
-{
+struct LowerBoundRec<List<Ts...>, Sought, Lower, Upper, CompFunc> {
 	static constexpr int Mid = Lower + (Upper - Lower) / 2;
 	static constexpr int value = IfThenElse<
 		CompFunc<Sought, NthElement<List<Ts...>, Mid>>::value,
@@ -128,8 +120,7 @@ struct LowerBoundRec<List<Ts...>, Sought, Lower, Upper, CompFunc>
 };
 
 template<template<class...> class List, class Sought, template<class, class> class CompFunc, class... Ts>
-struct LowerBound<List<Ts...>, Sought, CompFunc>
-{
+struct LowerBound<List<Ts...>, Sought, CompFunc> {
 	static constexpr int value = LowerBoundRec<List<Ts...>, Sought, 0, sizeof...(Ts), CompFunc>::value;
 };
 
@@ -145,14 +136,12 @@ template<class...>
 struct ConcatListsT;
 
 template<template<class...> class List1, template<class...> class List2, class... Types1, class...Types2>
-struct ConcatListsT<List1<Types1...>, List2<Types2...>>
-{
+struct ConcatListsT<List1<Types1...>, List2<Types2...>> {
 	using Type = List1<Types1..., Types2...>;
 };
 
 template<class FirstList, class... RemainingLists>
-struct ConcatListsT<FirstList, RemainingLists...>
-{
+struct ConcatListsT<FirstList, RemainingLists...> {
 	using Type = typename ConcatListsT<FirstList, typename ConcatListsT<RemainingLists...>::Type>::Type;
 };
 
@@ -170,14 +159,12 @@ template<class...>
 struct JoinListsT;
 
 template<class Delim, template<class...> class List1, template<class...> class List2, class... Types1, class... Types2>
-struct JoinListsT<Delim, List1<Types1...>, List2<Types2...>>
-{
+struct JoinListsT<Delim, List1<Types1...>, List2<Types2...>> {
 	using Type = ConcatLists<List1<Types1..., Delim>, List2<Types2...>>;
 };
 
 template<class Delim, class FirstList, class... RemainingLists>
-struct JoinListsT<Delim, FirstList, RemainingLists...>
-{
+struct JoinListsT<Delim, FirstList, RemainingLists...> {
 	using Type = typename JoinListsT<Delim, FirstList, typename JoinListsT<Delim, RemainingLists...>::Type>::Type;
 };
 
@@ -198,8 +185,7 @@ struct ListHeadT
 {};
 
 template<int Size, class List, class ResultList>
-struct ListHeadT<Size, Size, List, ResultList> 
-{
+struct ListHeadT<Size, Size, List, ResultList> {
 	using Type = ResultList;
 };
 
@@ -252,14 +238,12 @@ public:
 };
 
 template<class List, int Ind, template<class, class> class Comp>
-struct SortListT<List, Ind, Ind, Comp>
-{
+struct SortListT<List, Ind, Ind, Comp> {
 	using Type = List;
 };
 
 template<class List, template<class, class> class Comp>
-struct SortListT<List, 1, 0, Comp>
-{
+struct SortListT<List, 1, 0, Comp> {
 	using Type = EmptyList<List>;
 };
 
