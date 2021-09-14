@@ -338,3 +338,79 @@ using RemoveIf = Filter<List, Not<Func>>;
 
 static_assert(std::is_same_v<RemoveIf<ValueList<int, 1, 3, 4, 5, 6, 2>, IsEven>, ValueList<int, 1, 3, 5>>, "");
 
+// LessEq
+
+template<class>
+struct LessEq; 
+
+template<class T, int I>
+struct LessEq<Value<T, I>> {
+	template<class T2, T2 I>
+	static constexpr bool apply(Value<T2, I>) {
+		return apply(I);
+	}
+
+	template<class T2>
+	static constexpr bool apply(T2 i) {
+		return i <= I;
+	}
+};
+
+static_assert(LessEq<Value<int, 2>>::apply(Value<int, 2>{}), "");
+static_assert(LessEq<Value<int, 2>>::apply(1), "");
+static_assert(LessEq<Value<int, 2>>::apply(2), "");
+static_assert(!LessEq<Value<int, 2>>::apply(3), "");
+
+// Greater
+
+template<class>
+struct Greater; 
+
+template<class T, int I>
+struct Greater <Value<T, I>> {
+	template<class T2, T2 I>
+	static constexpr bool apply(Value<T2, I>) {
+		return apply(I);
+	}
+
+	template<class T2>
+	static constexpr bool apply(T2 i) {
+		return i > I;
+	}
+};
+
+static_assert(!Greater<Value<int, 2>>::apply(Value<int, 2>{}), "");
+static_assert(!Greater<Value<int, 2>>::apply(1), "");
+static_assert(!Greater<Value<int, 2>>::apply(2), "");
+static_assert(Greater<Value<int, 2>>::apply(3), "");
+
+// QuickSort
+
+template<class List>
+struct QuickSortT {
+private:
+	using Pivot = Front<List>;
+	using LowerPart = Filter<PopFront<List>, LessEq<Pivot>>;
+	using UpperPart = Filter<PopFront<List>, Greater<Pivot>>;
+
+public:
+	using Type = JoinLists<
+		Pivot, 
+		typename QuickSortT<LowerPart>::Type, 
+		typename QuickSortT<UpperPart>::Type
+	>;
+};
+
+template<template<class...> class List>
+struct QuickSortT<List<>> {
+	using Type = List<>;
+};
+
+template<class List>
+using QuickSort = typename QuickSortT<List>::Type;
+
+static_assert(std::is_same_v<QuickSort<ValueList<int>>, ValueList<int>>, "");
+static_assert(std::is_same_v<QuickSort<ValueList<int, 3>>, ValueList<int, 3>>, "");
+static_assert(std::is_same_v<QuickSort<ValueList<int, 4, 3>>, ValueList<int, 3, 4>>, "");
+static_assert(std::is_same_v<QuickSort<ValueList<int, 1, 4, 3>>, ValueList<int, 1, 3, 4>>, "");
+static_assert(std::is_same_v<QuickSort<ValueList<int, 4, 3, -1, 5, 2, -2>>, ValueList<int, -2, -1, 2, 3, 4, 5>>, "");
