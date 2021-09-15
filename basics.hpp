@@ -17,7 +17,7 @@ struct Value
 };
 
 template<class T, T... Values>
-using ValueList = TypeList<Value<int, Values>...>;
+using ValueList = TypeList<Value<T, Values>...>;
 
 // ToTypeList
 
