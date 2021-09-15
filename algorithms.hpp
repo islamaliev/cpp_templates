@@ -222,6 +222,7 @@ using ListSlice = ListHead<End - Begin, ListTail<ListSize<List>::value - Begin, 
 static_assert(std::is_same_v<ListSlice<1, 4, TypeList<int, char, float, bool, double>>, TypeList<char, float, bool>>, "");
 static_assert(std::is_same_v<ListSlice<0, 2, TypeList<int, char, float, bool, double>>, TypeList<int, char>>, "");
 static_assert(std::is_same_v<ListSlice<2, 5, TypeList<int, char, float, bool, double>>, TypeList<float, bool, double>>, "");
+static_assert(std::is_same_v<ListSlice<2, 2, TypeList<int, char, float, bool, double>>, TypeList<>>, "");
 
 // SortList
 
@@ -393,3 +394,55 @@ static_assert(std::is_same_v<QuickSort<ValueList<int, 3>>, ValueList<int, 3>>, "
 static_assert(std::is_same_v<QuickSort<ValueList<int, 4, 3>>, ValueList<int, 3, 4>>, "");
 static_assert(std::is_same_v<QuickSort<ValueList<int, 1, 4, 3>>, ValueList<int, 1, 3, 4>>, "");
 static_assert(std::is_same_v<QuickSort<ValueList<int, 4, 3, -1, 5, 2, -2>>, ValueList<int, -2, -1, 2, 3, 4, 5>>, "");
+
+// MergeSort
+
+template<class List1, class List2, class = EmptyList<List1>>
+struct MergeSortedLists {
+	using Type = IfThenElse<
+		LessValue<Front<List1>, Front<List2>>::value,
+		PushFront<typename MergeSortedLists<PopFront<List1>, List2>::Type, Front<List1>>,
+		PushFront<typename MergeSortedLists<List1, PopFront<List2>>::Type, Front<List2>>
+	>;
+};
+
+template<template<class...> class List1, class List2, class Result>
+struct MergeSortedLists<List1<>, List2, Result> {
+	using Type = ConcatLists<Result, List2>;
+};
+
+template<class List1, template<class...> class List2, class Result>
+struct MergeSortedLists<List1, List2<>, Result> {
+	using Type = ConcatLists<Result, List1>;
+};
+
+template<class List>
+struct MergeSortT {
+private:
+	static constexpr int Size = ListSize<List>::value;
+	using SortedPart1 = typename MergeSortT<ListSlice<0, Size / 2, List>>::Type;
+	using SortedPart2 = typename MergeSortT<ListSlice<Size / 2, Size, List>>::Type;
+
+public:
+	using Type = typename MergeSortedLists<SortedPart1, SortedPart2>::Type;
+};
+
+template<template<class...> class List>
+struct MergeSortT<List<>> {
+	using Type = List<>;
+};
+
+template<template<class> class List, class T>
+struct MergeSortT<List<T>> {
+	using Type = List<T>;
+};
+
+template<class List>
+using MergeSort = typename MergeSortT<List>::Type;
+
+static_assert(std::is_same_v<MergeSort<ValueList<int>>, ValueList<int>>, "");
+static_assert(std::is_same_v<MergeSort<ValueList<int, 3>>, ValueList<int, 3>>, "");
+static_assert(std::is_same_v<MergeSort<ValueList<int, 4, 3>>, ValueList<int, 3, 4>>, "");
+static_assert(std::is_same_v<MergeSort<ValueList<int, 1, 4, 3>>, ValueList<int, 1, 3, 4>>, "");
+static_assert(std::is_same_v<MergeSort<ValueList<int, 4, 3, -1, 5, 2, -2>>, ValueList<int, -2, -1, 2, 3, 4, 5>>, "");
+
