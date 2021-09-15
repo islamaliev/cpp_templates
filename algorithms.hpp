@@ -351,15 +351,10 @@ template<class>
 struct Greater; 
 
 template<class T, int I>
-struct Greater <Value<T, I>> {
-	template<class T2, T2 I>
-	static constexpr bool apply(Value<T2, I>) {
-		return apply(I);
-	}
-
+struct Greater<Value<T, I>> {
 	template<class T2>
 	static constexpr bool apply(T2 i) {
-		return i > I;
+		return Not<LessEq<Value<T, I>>>::apply(i);
 	}
 };
 
